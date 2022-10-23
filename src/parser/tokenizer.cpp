@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <regex>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -22,6 +23,7 @@ struct tokenizer_impl {
 
   void skip_whitespace ();
   std::string pop_word ();
+  std::string_view pop_line ();
 
   std::unique_ptr<section_token> pop_section_token ();
   std::unique_ptr<timestamp_token> pop_timestamp_token ();
@@ -34,6 +36,7 @@ namespace {
   inline constexpr std::string c_whitespace(" \t\n\r");
   inline constexpr std::string c_end_tag("$end");
 } // ns anonymous
+  //
 
 tokenizer_impl::tokenizer_impl (std::string_view content)
   : content_(std::move(content))
@@ -41,6 +44,7 @@ tokenizer_impl::tokenizer_impl (std::string_view content)
 
 std::unique_ptr<token> tokenizer_impl::next_token () {
   std::unique_ptr<token> result;
+
 
   while (not content_.empty() and result == nullptr) {
     skip_whitespace();
@@ -59,12 +63,8 @@ std::unique_ptr<token> tokenizer_impl::next_token () {
 }
 
 void tokenizer_impl::skip_whitespace () {
-  unsigned num_skipped = content_.find_first_not_of(c_whitespace);
-  if (num_skipped != std::string_view::npos) {
-    content_.remove_prefix(num_skipped);
-  } else {
-    content_ = std::string_view();
-  }
+  auto end_of_whitespace = content_.find_first_not_of(c_whitespace);
+  content_ = content_.substr(end_of_whitespace);
 }
 
 std::unique_ptr<section_token> tokenizer_impl::pop_section_token () {
@@ -84,8 +84,6 @@ std::unique_ptr<section_token> tokenizer_impl::pop_section_token () {
     body = content_.substr(body_begin, end_tag_pos - body_begin - 1);
   }
 
-  std::cout << type << std::endl;
-  std::cout << "'" << body << "'" << std::endl;
   content_.remove_prefix(end_tag_pos + c_end_tag.size());
   return std::make_unique<section_token>(std::move(type), std::move(body));
 }
@@ -97,22 +95,28 @@ std::unique_ptr<timestamp_token> tokenizer_impl::pop_timestamp_token () {
 }
 
 std::unique_ptr<value_change_token> tokenizer_impl::pop_value_token () {
-  std::string value = pop_word();
-  std::string identifier;
-  if (value.front() == 'r' or value.front() == 'b') {
-    skip_whitespace();
-    identifier = pop_word();
-  } else if (value.front() == 'x' or value.front() == 'z' or
-      value.front() == '1' or value.front() == '0') {
-    assert(value.size() == 2);
-    identifier = value.substr(1);
-    value = value.substr(0, 1);
-  } else {
-    throw tokenizer::error(std::string("Unexpected token: ") + value);
-  }
+  std::regex const simple_value_pattern("^[01zx][!-~]+");
+  std::regex const vector_value_pattern("^[rbB][\\dzx]+\\s[!-~]+");
 
-  return std::make_unique<value_change_token>(std::move(value),
+  std::string line(pop_line());
+
+  std::smatch match;
+  if (std::regex_match(line, match, simple_value_pattern)) {
+    std::string value(line.begin(), std::next(line.begin()));
+    std::string identifier(std::next(line.begin()), line.end());
+    content_.remove_prefix(line.size());
+    return std::make_unique<value_change_token>(std::move(value),
       std::move(identifier));
+  } else if (std::regex_match(line, match, vector_value_pattern)) {
+    auto separator_pos = line.find_first_of(c_whitespace);
+    std::string value = line.substr(0, separator_pos);
+    std::string identifier = line.substr(separator_pos + 1);
+    content_.remove_prefix(line.size());
+    return std::make_unique<value_change_token>(std::move(value),
+      std::move(identifier));
+  } else {
+    throw tokenizer::error("Unexpected value change definition.");
+  }
 }
 
 std::string tokenizer_impl::pop_word () {
@@ -123,6 +127,11 @@ std::string tokenizer_impl::pop_word () {
   std::string result(content_.substr(0, end_of_word));
   content_.remove_prefix(result.size());
   return result;
+}
+
+std::string_view tokenizer_impl::pop_line () {
+  auto end_of_line = content_.find('\n');      
+  return content_.substr(0, end_of_line);
 }
 
 std::vector<std::unique_ptr<token>> tokenizer::tokenize (std::string_view content) {

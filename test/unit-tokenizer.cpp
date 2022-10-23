@@ -40,6 +40,16 @@ TEST_SUITE("Tokenizer") {
       CHECK_EQ(section.type(), "timescale");
       CHECK_EQ(section.body(), "100 ns");
     }
+
+    SUBCASE("Variable") {
+      std::string const line("$var wire 1 ! clk $end");
+      auto tokens = t.tokenize(line);
+      CHECK_EQ(tokens.size(), 1);
+      CHECK(tokens.front()->is<section_token>());
+      auto const & section = tokens.front()->as<section_token>();
+      CHECK_EQ(section.type(), "var");
+      CHECK_EQ(section.body(), "wire 1 ! clk");
+    }
   }
 
   TEST_CASE("Timestamp tokens") {

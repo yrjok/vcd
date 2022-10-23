@@ -14,6 +14,7 @@ target_sources(test_runner
   PRIVATE
     test_runner.cpp
     unit-tokenizer.cpp
+    unit-parser.cpp
 )
 target_link_libraries(test_runner PRIVATE vcd)
 
