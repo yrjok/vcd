@@ -5,6 +5,7 @@
 #include <vcd/parser/token.h>
 #include <vcd/parser/value_change_token.h>
 
+#include <iostream>
 #include <cassert>
 #include <memory>
 #include <stdexcept>
@@ -67,23 +68,26 @@ void tokenizer_impl::skip_whitespace () {
 }
 
 std::unique_ptr<section_token> tokenizer_impl::pop_section_token () {
-  auto end_pos = content_.find(c_end_tag);
-  if (end_pos == std::string_view::npos) {
+  auto end_tag_pos = content_.find(c_end_tag);
+  if (end_tag_pos == std::string_view::npos) {
     throw tokenizer::error("Counld't find matching $end tag");
   }
-
-  auto size = end_pos + c_end_tag.size();
-
-  std::string_view body(content_.begin(), std::next(content_.begin(), size));
-  auto end_of_section_name = body.find_first_of(c_whitespace);
-  if (end_of_section_name == std::string_view::npos) {
-    throw tokenizer::error("Section body is missing whitespace.");
+  
+  std::string type;
+  std::string body;
+  auto type_end = content_.find_first_of(c_whitespace);
+  if (type_end > end_tag_pos or type_end == std::string_view::npos) {
+    type = content_.substr(1, end_tag_pos);
+  } else {
+    type = content_.substr(1, type_end - 1);
+    auto body_begin = type_end + 1;
+    body = content_.substr(body_begin, end_tag_pos - body_begin - 1);
   }
 
-  auto body_begin = std::next(content_.begin(), end_of_section_name);
-  auto body_end = std::next(content_.begin(), end_pos - 1);
-  content_.remove_prefix(size);
-  return std::make_unique<section_token>("", "");
+  std::cout << type << std::endl;
+  std::cout << "'" << body << "'" << std::endl;
+  content_.remove_prefix(end_tag_pos + c_end_tag.size());
+  return std::make_unique<section_token>(std::move(type), std::move(body));
 }
 
 std::unique_ptr<timestamp_token> tokenizer_impl::pop_timestamp_token () {

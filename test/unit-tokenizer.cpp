@@ -16,6 +16,12 @@ TEST_SUITE("Tokenizer") {
     CHECK_EQ(tokens.size(), 1);
   }
 
+  TEST_CASE("Skips intermediate whitespace") {
+    std::string const line("$timescale 100 ns $end  \t\n\t  \n$commend $end");
+    auto tokens = t.tokenize(line);
+    CHECK_EQ(tokens.size(), 2);
+  }
+
   TEST_CASE("Throws in case of unexpected tokens") {
     std::string const line("$timescale 100 ns $end\n"
       "unexpected\n"
@@ -25,16 +31,14 @@ TEST_SUITE("Tokenizer") {
 
 
   TEST_CASE("Section tokens") {
-    SUBCASE("Throws when section has invalid body") {
-      std::string const line("$timescale$end");
-      CHECK_THROWS_AS(t.tokenize(line), tokenizer::error);
-    }
-
     SUBCASE("Timescale") {
       std::string const line("$timescale 100 ns $end");
       auto tokens = t.tokenize(line);
       CHECK_EQ(tokens.size(), 1);
       CHECK(tokens.front()->is<section_token>());
+      auto const & section = tokens.front()->as<section_token>();
+      CHECK_EQ(section.type(), "timescale");
+      CHECK_EQ(section.body(), "100 ns");
     }
   }
 
