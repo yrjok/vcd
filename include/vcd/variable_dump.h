@@ -1,8 +1,11 @@
 #pragma once
 
+#include <vcd/types.h>
+
 #include <variant>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace vcd {
 
@@ -10,31 +13,25 @@ class variable_dump {
 public:
   // TODO: add other types
   using timestamp = unsigned long;
-  using value = std::variant<bool, unsigned>;
 
   variable_dump ();
-  variable_dump (std::string reference);
+  variable_dump (unsigned size);
 
-  variable_dump & with_initial_value (value init);
-  variable_dump & with_change_at (timestamp time, value new_value);
+  unsigned size ();
+
+  void set_reference (std::string reference);
+  void set_initial_value (types::value init);
+
+  void add_change (timestamp time, types::value new_value);
 
   std::size_t num_changes () const;
 private:
-
-  struct value_change {
-    value_change (timestamp t, value v);
-
-    timestamp time;
-    value new_value;
-
-    std::strong_ordering operator<=> (value_change const & other) const;
-  };
-
+  unsigned size_;
   std::string identifier_;
   std::string reference_;
 
-  value initial_value_;
-  std::vector<value_change> value_changes_;
+  types::value initial_value_;
+  std::map<timestamp, types::value> value_changes_;
 };
 
 } // ns vcd

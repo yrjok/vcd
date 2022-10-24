@@ -68,7 +68,7 @@ void tokenizer_impl::skip_whitespace () {
 }
 
 std::unique_ptr<section_token> tokenizer_impl::pop_section_token () {
-  auto end_tag_pos = content_.find(c_end_tag);
+  auto end_tag_pos = content_.find(c_end_tag, 1);
   if (end_tag_pos == std::string_view::npos) {
     throw tokenizer::error("Counld't find matching $end tag");
   }
@@ -105,15 +105,15 @@ std::unique_ptr<value_change_token> tokenizer_impl::pop_value_token () {
     std::string value(line.begin(), std::next(line.begin()));
     std::string identifier(std::next(line.begin()), line.end());
     content_.remove_prefix(line.size());
-    return std::make_unique<value_change_token>(std::move(value),
-      std::move(identifier));
+    return std::make_unique<value_change_token>(std::move(identifier),
+      std::move(value));
   } else if (std::regex_match(line, match, vector_value_pattern)) {
     auto separator_pos = line.find_first_of(c_whitespace);
     std::string value = line.substr(0, separator_pos);
     std::string identifier = line.substr(separator_pos + 1);
     content_.remove_prefix(line.size());
-    return std::make_unique<value_change_token>(std::move(value),
-      std::move(identifier));
+    return std::make_unique<value_change_token>(std::move(identifier),
+      std::move(value));
   } else {
     throw tokenizer::error("Unexpected value change definition.");
   }

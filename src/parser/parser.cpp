@@ -67,7 +67,8 @@ void parser::parse_section (section_token & section) {
     auto identifier = pop_word(body);
     trim_left(body);
     auto reference = body;
-    temp_.variables[identifier] = variable_dump(std::move(reference));
+    unsigned width = stoul(var_width);
+    temp_.variables.emplace(identifier, variable_dump(width));
   } else {
     std::cout << "Skipping unknown section type "
       << section.type() << std::endl;
@@ -83,13 +84,8 @@ void parser::parse_value_change (value_change_token value_change) {
     throw std::runtime_error("No variable registered with given id");
   }
 
-  if (value_change.value().size() == 1) {
-    bool new_value = value_change.value() == "1";
-    temp_.variables.at(value_change.identifier())
-      .with_change_at(temp_.current_time, new_value);
-  } else {
-    throw std::runtime_error("TODO");
-  }
+  temp_.variables.at(value_change.identifier())
+    .add_change(temp_.current_time, types::parse_value(value_change.value()));
 }
 
 

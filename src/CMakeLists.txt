@@ -9,4 +9,5 @@ target_sources(vcd
     parser/parser.cpp
     value_change_dump.cpp
     variable_dump.cpp
+    types.cpp
 )
