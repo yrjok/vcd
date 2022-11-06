@@ -10,7 +10,7 @@ project(
 option(BUILD_TESTS "Also build all the tests" OFF)
 option(CLANG_TIDY "RUn clang-tidy on source files" OFF)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 include_directories(include)
 

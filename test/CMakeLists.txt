@@ -13,8 +13,11 @@ target_include_directories(test_runner PRIVATE ${doctest_SOURCE_DIR})
 target_sources(test_runner
   PRIVATE
     test_runner.cpp
-    unit-tokenizer.cpp
-    unit-parser.cpp
+    #unit-tokenizer.cpp
+    #unit-parser.cpp
+    unit-recognizers.cpp
+    unit-combinators.cpp
+    unit-recognizer_factory.cpp
 )
 target_link_libraries(test_runner PRIVATE vcd)
 
