@@ -120,4 +120,18 @@ recognizer recognizer_factory::value () {
   return create<either>(value_bit(), value_vector());
 }
 
+recognizer recognizer_factory::section () {
+  return create<sequence>(
+    keyword(),
+    create<sequence>(
+      create<many>(create<negate>(keyword_end())),
+      keyword_end()
+    )
+  );
+}
+
+recognizer recognizer_factory::timestamp () {
+  return create<sequence>(literal("#"), number());
+}
+
 } // ns vcd

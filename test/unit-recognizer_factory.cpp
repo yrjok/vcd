@@ -190,4 +190,33 @@ TEST_SUITE("Recognizer factory") {
       CHECK(not match.has_value());
     }
   }
+
+  TEST_CASE("VCD definition section") {
+    auto recognizer = recognizer_factory::section();
+
+    SUBCASE("Matches the entire section") {
+      std::string const content("$var reg 1 ^ data $end");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+
+    SUBCASE("Does not match past a section") {
+      std::string const content("$var reg 1 ^ data $end $end");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), "$var reg 1 ^ data $end");
+    }
+  }
+
+  TEST_CASE("VCD timestamps") {
+    auto recognizer = recognizer_factory::timestamp();
+
+    SUBCASE("Matches the timestamp") {
+      std::string const content("#5420");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+  }
 }

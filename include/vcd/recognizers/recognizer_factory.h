@@ -10,6 +10,7 @@ public:
   static recognizer lowercase ();
   static recognizer uppercase ();
   static recognizer letter ();
+  // Matches a single whitespace character
   static recognizer whitespace ();
   static recognizer identifier_char ();
 
@@ -37,6 +38,9 @@ public:
 
   // Recognizes a VCD definition section value
   static recognizer section ();
+
+  // Recognizes a VCD timestamp
+  static recognizer timestamp ();
 };
 
 } // ns vcd
