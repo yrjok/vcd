@@ -88,4 +88,25 @@ TEST_SUITE("Combinators") {
       CHECK(match.value().size() == 3);
     }
   }
+
+  TEST_CASE("Negate") {
+    recognizers::any any;
+    recognizers::satisfying negated(any.clone(), [](auto v) { return v == "a"; });
+    recognizers::negate recognizer(negated);
+
+    SUBCASE("Returns size one match if the negated recognizer fails.") {
+      std::string content("sheep");
+      REQUIRE(not negated.matches(content));
+      auto match = recognizer.matches(content);
+      CHECK(match.has_value());
+      CHECK(match.value().size() == 1);
+    }
+
+    SUBCASE("Does not match if the negated recognizer succeeds.") {
+      std::string content("abba");
+      REQUIRE(negated.matches(content));
+      auto match = recognizer.matches(content);
+      CHECK(not match.has_value());
+    }
+  }
 }

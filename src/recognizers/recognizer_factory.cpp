@@ -3,6 +3,7 @@
 #include <vcd/recognizers/combinators.h>
 #include <vcd/recognizers/recognizer.h>
 
+#include <cassert>
 #include <memory>
 #include <utility>
 #include <string_view>
@@ -39,6 +40,17 @@ recognizer recognizer_factory::uppercase () {
   return create<satisfying>(any(), func);
 }
 
+recognizer recognizer_factory::letter () {
+  return create<either>(lowercase().impl().clone(), uppercase().impl().clone());
+}
+
+recognizer recognizer_factory::whitespace () {
+  return create<either>(
+    create<either>(literal(" "), literal("\t")),
+    create<either>(literal("\r"), literal("\n"))
+  );
+}
+
 recognizer recognizer_factory::identifier_char () {
   auto func = [](std::string_view view) { 
     return view.size() == 1 and view[0] >= '!' and view[0] <= '~';
@@ -48,6 +60,64 @@ recognizer recognizer_factory::identifier_char () {
 
 recognizer recognizer_factory::identifier () {
   return create<many>(identifier_char().impl().clone());
+}
+
+recognizer recognizer_factory::word () {
+  return create<many>(either(literal("_"), either(letter(), digit())));
+}
+
+recognizer recognizer_factory::number () {
+  return create<many>(digit());
+}
+
+recognizer recognizer_factory::literal (std::string const & value) {
+  auto literal_char = [](char c) {
+    return [=](std::string_view v) { return v.size() == 1 and v[0] == c; };
+  };
+
+  assert(not value.empty());
+  auto result = create<satisfying>(any(), literal_char(value.at(0)));
+
+  for (auto i = 1; i < value.size(); ++i) {
+    result = create<sequence>(
+      result,
+      create<satisfying>(any(), literal_char(value.at(i)))
+    );
+  }
+
+  return result;
+}
+
+recognizer recognizer_factory::keyword () {
+  return create<sequence>(literal("$"), word());
+}
+
+recognizer recognizer_factory::keyword_end () {
+  // Don't use 'literal' recognizer here since it would also match
+  // "$enddefinitions"
+  auto func = [](std::string_view view) { return view == "$end"; };
+  return create<satisfying>(keyword().impl().clone(), func);
+}
+
+recognizer recognizer_factory::value_bit () {
+  return create<either>(
+    create<either>(
+      create<either>(literal("0"), literal("1")),
+      create<either>(literal("x"), literal("X"))
+    ),
+    create<either>(literal("z"), literal("Z"))
+  );
+}
+
+recognizer recognizer_factory::value_vector () {
+  return create<sequence>(
+    create<either>(literal("b"), literal("B")),
+    create<many>(value_bit())
+  );
+}
+
+recognizer recognizer_factory::value () {
+  return create<either>(value_bit(), value_vector());
 }
 
 } // ns vcd

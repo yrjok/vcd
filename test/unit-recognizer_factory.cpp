@@ -3,7 +3,7 @@
 #include <vcd/recognizers/recognizer_factory.h>
 
 #include <string>
-#include <iostream>
+#include <vector>
 
 using namespace vcd;
 
@@ -94,6 +94,100 @@ TEST_SUITE("Recognizer factory") {
       auto match = recognizer.matches(content);
       REQUIRE(match.has_value());
       CHECK(match.value() == "!&~");
+    }
+  }
+
+  TEST_CASE("word") {
+    auto recognizer = recognizer_factory::word();
+
+    SUBCASE("Matches entire words") {
+      std::string const content("Hello, world!");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK(match.value() == "Hello");
+    }
+
+    SUBCASE("Matches underscores in words") {
+      std::string const content("valid_word");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK(match.value() == content);
+    }
+  }
+
+  TEST_CASE("literal") {
+    std::string const literal("OMG");
+    auto recognizer = recognizer_factory::literal(literal);
+
+    SUBCASE("Matches the literal") {
+      std::string const content("OMG");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+
+    SUBCASE("Does not match anything trailing it") {
+      std::string const content("OMGWHATISTHIS");
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), "OMG");
+    }
+  }
+
+  TEST_CASE("VCD value") {
+    auto recognizer = recognizer_factory::value();
+
+    SUBCASE("Matches single bit values") {
+      std::vector<std::string> values {
+        "0", "1", "X", "x", "Z", "z"
+      };
+      for (auto const & e : values) {
+        auto match = recognizer.matches(e);
+        CHECK(match.has_value());
+        CHECK_EQ(match.value(), e);
+      }
+    }
+
+    SUBCASE("Matches bit vector values") {
+      std::vector<std::string> values {
+        "b001101",
+        "B0101",
+        "b0",
+        "B1"
+      };
+      for (auto const & e : values) {
+        auto match = recognizer.matches(e);
+        CHECK(match.has_value());
+        CHECK_EQ(match.value(), e);
+      }
+    }
+  }
+
+  TEST_CASE("VCD keyword") {
+    auto recognizer = recognizer_factory::keyword();
+
+    SUBCASE("Matches only the keyword") {
+      std::string const content("$date some txt xd $end");
+      auto match = recognizer.matches(content);
+      CHECK(match.has_value());
+      CHECK_EQ(match.value(), "$date");
+    }
+  }
+
+  TEST_CASE("VCD keyword end") {
+    auto recognizer = recognizer_factory::keyword_end();
+
+    SUBCASE("Matches only the keyword") {
+      std::string const content("$end\n$date");
+      auto match = recognizer.matches(content);
+      CHECK(match.has_value());
+      CHECK_EQ(match.value(), "$end");
+    }
+
+    SUBCASE("Does not match when $end is only part of the keyword") {
+      std::string const content("$endsomething");
+      auto match = recognizer.matches(content);
+      CHECK(not match.has_value());
     }
   }
 }

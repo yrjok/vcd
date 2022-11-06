@@ -16,6 +16,8 @@ public:
 
   // Functions
   recognizer (std::unique_ptr<recognizer_base> impl);
+  recognizer (recognizer_base const & impl);
+
   recognizer (recognizer const & other);
   recognizer (recognizer && other);
   recognizer & operator=(recognizer const & other);

@@ -10,6 +10,10 @@ recognizer::recognizer (std::unique_ptr<recognizer_base> impl)
   : impl_(std::move(impl))
 { }
 
+recognizer::recognizer (recognizer_base const & impl)
+  : recognizer(impl.clone())
+{ }
+
 recognizer::recognizer (recognizer const & other)
   : impl_(other.impl_->clone())
 { }
