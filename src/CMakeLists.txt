@@ -14,10 +14,6 @@ target_include_directories(vcd PRIVATE ${result_SOURCE_DIR})
 
 target_sources(vcd
   PRIVATE
-    parser/tokenizer.cpp
-    parser/section_token.cpp
-    parser/value_change_token.cpp
-    parser/timestamp_token.cpp
     parser/parser.cpp
     recognizers/recognizer.cpp
     recognizers/fundamental.cpp

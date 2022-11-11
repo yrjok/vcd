@@ -7,14 +7,51 @@ namespace vcd {
 
 namespace types {
 
-enum class bit { one, zero, high_z, undefined };
+class timestamp {
+public:
+  timestamp ();
+  timestamp (unsigned long long value);
 
-bit parse_bit (char c);
+  unsigned long long value () const;
 
-using value = std::vector<bit>;
+  std::strong_ordering operator<=> (timestamp const & other) const;
 
-value parse_value (std::string const s);
+private:
+  unsigned long long value_;
+};
 
-}
+class bit {
+public:
+  bit ();
+
+  static bit zero ();
+  static bit one ();
+  static bit z ();
+  static bit x ();
+
+  bool operator== (bit const & other) const;
+  bool operator!= (bit const & other) const;
+
+private:
+  bit (std::uint8_t val);
+
+  std::uint8_t val_;
+};
+
+class value {
+public:
+  value ();
+  value (std::size_t num_bits);
+
+  std::size_t num_bits () const;
+
+  bit const & at (std::size_t index) const;
+  bit       & at (std::size_t index);
+
+private:
+  std::vector<bit> bits_;
+};
+
+} // ns types
 
 } // ns vcd

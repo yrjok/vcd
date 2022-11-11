@@ -41,6 +41,9 @@ public:
 
   // Recognizes a VCD timestamp
   static recognizer timestamp ();
+
+  // Recognizes a VCD named variable value change
+  static recognizer value_change ();
 };
 
 } // ns vcd

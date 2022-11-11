@@ -1,5 +1,4 @@
 #include <vcd/parser/parser.h>
-#include <vcd/parser/tokenizer.h>
 
 #include <doctest/doctest.h>
 
@@ -9,50 +8,27 @@ TEST_SUITE("Parser") {
   parser p;
 
   TEST_CASE("parses variable sections") {
-    auto section = section_token("var", "wire 1 ! clk");
-    p.parse_section(section);
-    auto vcd = p.finalize();
-
-    CHECK_EQ(vcd.variables.size(), 1);
-    CHECK_EQ(vcd.variables.count("!"), 1);
-  }
-
-  TEST_CASE("parses timestamps") {
-    constexpr unsigned c_time = 42;
-    p.consume(std::make_unique<timestamp_token>(c_time));
-    auto vcd = p.finalize();
-    CHECK_EQ(vcd.current_time, c_time);
+    std::string section("$var wire 8 # data $end");
+    auto result = p.parse(section);
+    REQUIRE_EQ(result.variables.size(), 1);
+    CHECK_EQ(result.variables.begin()->first, "#");
+    CHECK_EQ(result.variables.begin()->second.num_bits(), 8);
   }
 
   TEST_CASE("parses value changes") {
-    {
-      section_token section("var", "wire 1 ! clk");
-      p.parse_section(section);
-    }
-    {
-      section_token section("var", "wire 1 ~ clk");
-      p.parse_section(section);
-    }
-
-    {
-      timestamp_token timestamp(1);
-      p.parse_timestamp(timestamp);
-    }
-
-    p.parse_value_change(value_change_token("!", "0"));
-
-    {
-      timestamp_token timestamp(7);
-      p.parse_timestamp(timestamp);
-    }
-
-    p.parse_value_change(value_change_token("!", "1"));
-    p.parse_value_change(value_change_token("~", "1"));
-
-    auto vcd = p.finalize();
-
-    CHECK_EQ(vcd.variables["!"].num_changes(), 2);
-    CHECK_EQ(vcd.variables["~"].num_changes(), 1);
+    std::string content("$var wire 4 ! data $end\n#1023\nb011x !\n");
+    auto result = p.parse(content);
+    REQUIRE_EQ(result.variables.size(), 1);
+    CHECK_EQ(result.variables.begin()->first, "!");
+    auto const & variable = result.variables.begin()->second;
+    CHECK_EQ(variable.num_bits(), 4);
+    CHECK_EQ(variable.num_changes(), 1);
+    CHECK_EQ(variable.events().front().first.value(), 1023);
+    auto val = variable.events().front().second; 
+    CHECK_EQ(val.at(0), types::bit::zero());
+    CHECK_EQ(val.at(1), types::bit::one());
+    CHECK_EQ(val.at(2), types::bit::one());
+    CHECK_EQ(val.at(3), types::bit::x());
   }
 
   TEST_CASE("Example file") {
@@ -100,19 +76,12 @@ b10000001 #
 #2302
 0$
 #2303)";
-    tokenizer t;
     parser p;
 
-    for (auto & e : t.tokenize(content)) { p.consume(std::move(e)); }
-    auto vcd = p.finalize();
-
-    CHECK(vcd.variables.count("#"));
-    CHECK(vcd.variables.count("$"));
-    CHECK(vcd.variables.count("%"));
-    CHECK(vcd.variables.count("&"));
-    CHECK(vcd.variables.count("'"));
-    CHECK(vcd.variables.count("("));
-    CHECK(vcd.variables.count(")"));
-    CHECK_EQ(vcd.variables["$"].num_changes(), 3);
+    auto dump = p.parse(content);
+    CHECK_EQ(dump.variables.size(), 7);
+    CHECK(dump.variables.count("#"));
+    CHECK_EQ(dump.variables.at("#").num_changes(), 1);
+    CHECK_EQ(dump.variables.at("#").num_bits(), 8);
   }
 }

@@ -134,4 +134,11 @@ recognizer recognizer_factory::timestamp () {
   return create<sequence>(literal("#"), number());
 }
 
+recognizer recognizer_factory::value_change () {
+  return create<either>(
+    create<sequence>(value_vector(), create<sequence>(whitespace(), identifier())),
+    create<sequence>(value_bit(), identifier())
+  );
+}
+
 } // ns vcd

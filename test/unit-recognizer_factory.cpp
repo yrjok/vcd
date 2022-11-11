@@ -219,4 +219,32 @@ TEST_SUITE("Recognizer factory") {
       CHECK_EQ(match.value(), content);
     }
   }
+
+  TEST_CASE("Value change") {
+    auto recognizer = recognizer_factory::value_change();
+
+    SUBCASE("Matches single bit value changes") {
+      std::string const content("1*");
+
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+
+    SUBCASE("Matches single bit vector value changes") {
+      std::string const content("b0 !");
+
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+
+    SUBCASE("Matches mutliple bit vector value changes") {
+      std::string const content("b100001 #");
+
+      auto match = recognizer.matches(content);
+      REQUIRE(match.has_value());
+      CHECK_EQ(match.value(), content);
+    }
+  }
 }
