@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vcd/types.h>
+#include <vcd/variable_dump_view.h>
 
 #include <variant>
 #include <string>
@@ -9,28 +10,30 @@
 
 namespace vcd {
 
-class variable_dump {
+class variable_dump : public variable_dump_view {
 public:
   variable_dump ();
   variable_dump (unsigned num_bits);
 
-  unsigned num_bits () const;
+  unsigned num_changes () const override;
+  unsigned num_bits () const override;
+
+  types::value initial_value () const override;
+
+  types::value at (types::timestamp time) const override;
+
+  const_value_change_iterator begin () const override;
+  const_value_change_iterator end () const override;
 
   void set_reference (std::string reference);
   void set_initial_value (types::value init);
 
   void add_change (types::timestamp time, types::value new_value);
+  void add_change (types::value_change change);
 
-  std::size_t num_changes () const;
-
-  using event = std::pair<types::timestamp, types::value>;
-  std::vector<event> events () const;
 private:
-  std::string identifier_;
-  std::string reference_;
-
   types::value initial_value_;
-  std::map<types::timestamp, types::value> value_changes_;
+  std::vector<types::value_change> value_changes_;
 };
 
 } // ns vcd

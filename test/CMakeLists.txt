@@ -14,6 +14,7 @@ target_sources(test_runner
   PRIVATE
     test_runner.cpp
     unit-parser.cpp
+    unit-variable_dump.cpp
     unit-recognizers.cpp
     unit-combinators.cpp
     unit-recognizer_factory.cpp

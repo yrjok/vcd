@@ -23,8 +23,8 @@ TEST_SUITE("Parser") {
     auto const & variable = result.variables.begin()->second;
     CHECK_EQ(variable.num_bits(), 4);
     CHECK_EQ(variable.num_changes(), 1);
-    CHECK_EQ(variable.events().front().first.value(), 1023);
-    auto val = variable.events().front().second; 
+    CHECK_EQ(variable.begin()->t, types::timestamp(1023));
+    auto val = variable.begin()->v; 
     CHECK_EQ(val.at(0), types::bit::zero());
     CHECK_EQ(val.at(1), types::bit::one());
     CHECK_EQ(val.at(2), types::bit::one());

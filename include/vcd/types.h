@@ -15,6 +15,8 @@ public:
   unsigned long long value () const;
 
   std::strong_ordering operator<=> (timestamp const & other) const;
+  bool operator== (timestamp const & other) const;
+  bool operator!= (timestamp const & other) const;
 
 private:
   unsigned long long value_;
@@ -50,6 +52,14 @@ public:
 
 private:
   std::vector<bit> bits_;
+};
+
+bool operator== (value const & a, value const & b);
+bool operator!= (value const & a, value const & b);
+
+struct value_change {
+  timestamp t;
+  value v;
 };
 
 } // ns types

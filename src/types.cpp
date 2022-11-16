@@ -23,6 +23,14 @@ std::strong_ordering timestamp::operator<=> (timestamp const & other) const {
   return value_ <=> other.value_;
 }
 
+bool timestamp::operator== (timestamp const & other) const {
+  return value() == other.value();
+}
+
+bool timestamp::operator!= (timestamp const & other) const {
+  return not operator==(other);
+}
+
 enum class bit_value : std::uint8_t {
   zero = 0,
   one = 1,
@@ -80,6 +88,18 @@ bit const & value::at (std::size_t index) const {
 
 bit & value::at (std::size_t index) {
   return bits_.at(index);
+}
+
+bool operator== (value const & a, value const & b) {
+  if (a.num_bits() != b.num_bits()) { return false; }
+  for (std::size_t i = 0; i < a.num_bits(); ++i) {
+    if (a.at(i) != b.at(i)) { return false; }
+  }
+  return true;
+}
+
+bool operator!= (value const & a, value const & b) {
+  return not operator==(a, b);
 }
 
 } // ns types

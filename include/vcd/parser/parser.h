@@ -1,11 +1,7 @@
 #pragma once
 
 #include <vcd/value_change_dump.h>
-#include <vcd/parser/token.h>
 #include <vcd/types.h>
-#include <vcd/parser/value_change_token.h>
-#include <vcd/parser/section_token.h>
-#include <vcd/parser/timestamp_token.h>
 
 #include <optional>
 #include <vector>
